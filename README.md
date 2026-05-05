@@ -4,9 +4,19 @@ source code for the diachronic semantic change pipeline used on the brpolicorpus
 
 ## setup
 
+install `uv` if needed:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+then install the project environment:
+
 ```bash
 uv sync
 ```
+
+the workflow uses a hydra pipeline. configs live under `run/conf/`, and the main entrypoint is `run/pipeline/main.py`.
 
 ## download data
 
@@ -28,6 +38,12 @@ outputs are written to `run/outputs/`.
 
 ```bash
 uv run python run/pipeline/main.py task=cross_method_agreement
+```
+
+you can override hydra config values from the command line, for example:
+
+```bash
+uv run python run/pipeline/main.py task=prepare_corpus preprocess.n_process=4
 ```
 
 ## generate figures
