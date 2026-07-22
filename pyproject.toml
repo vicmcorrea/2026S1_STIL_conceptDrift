@@ -2,6 +2,8 @@
 name = "stil-concept-drift"
 version = "0.1.0"
 description = "Portuguese diachronic semantic-change pipeline."
+readme = "README.md"
+license = "MIT"
 requires-python = ">=3.12"
 dependencies = [
   "adjusttext>=1.3.0",

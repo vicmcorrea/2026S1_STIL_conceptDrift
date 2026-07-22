@@ -1,0 +1,52 @@
+{
+  "comparison_source": "../bert_confirmatory/comparison_with_word2vec.parquet",
+  "preferred_layer": -1,
+  "top_k_values": [
+    5,
+    10,
+    15
+  ],
+  "panel_lemmas": 55,
+  "layers": [
+    -4,
+    -1
+  ],
+  "filtered_bert_candidate_count": 35,
+  "stable_control_leakage_count": 20,
+  "filtered_bert_top_terms": [
+    "bloqueio",
+    "típico",
+    "exposição",
+    "salário",
+    "mínimo",
+    "troca",
+    "preço",
+    "voto",
+    "real",
+    "intervenção",
+    "excepcional",
+    "renovação",
+    "eleição",
+    "crítico",
+    "político"
+  ],
+  "stable_control_leakage_top_terms": [
+    "expresso",
+    "vento",
+    "trabalho",
+    "público",
+    "inteligente",
+    "social",
+    "ensino",
+    "sincero",
+    "recurso",
+    "altíssimo"
+  ],
+  "theory_seed_terms": [
+    "reforma",
+    "liberdade",
+    "economia",
+    "corrupção",
+    "democracia"
+  ]
+}

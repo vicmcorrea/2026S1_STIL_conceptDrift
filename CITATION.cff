@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite the accompanying STIL 2026 paper."
+title: "A Comparative Framework for Diachronic Lexical Semantic Change in Brazilian Portuguese Political Discourse"
+type: software
+authors:
+  - family-names: Correa
+    given-names: João Victor M.
+  - family-names: Vale
+    given-names: Oto Araújo
+  - family-names: Silva
+    given-names: Renato Moraes
+repository-code: "https://github.com/nilc-nlp/2026S1_STIL_conceptDrift"
+url: "https://github.com/nilc-nlp/2026S1_STIL_conceptDrift"
+license: MIT
+date-released: "2026-07-22"
+abstract: >
+  Code, configuration, and compact frozen result summaries for comparing
+  lexical, static-embedding, and contextual semantic-change signals in
+  Brazilian Portuguese political discourse.
