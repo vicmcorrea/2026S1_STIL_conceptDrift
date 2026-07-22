@@ -26,34 +26,40 @@ OKABE_ITO = {
     "grey": "#7F7F7F",
     "black": "#000000",
 }
+
 BUCKET_LABELS = {
     "word2vec_only_drift": "Word2Vec drift",
     "tfidf_only_drift": "TF-IDF drift",
     "stable_control": "Stable control",
     "theory_seed": "Theory seed",
 }
+
 BUCKET_COLORS = {
     "word2vec_only_drift": OKABE_ITO["blue"],
     "tfidf_only_drift": OKABE_ITO["orange"],
     "stable_control": OKABE_ITO["grey"],
     "theory_seed": OKABE_ITO["purple"],
 }
+
 METHOD_COLORS = {
     "Word2Vec": OKABE_ITO["blue"],
     "TF-IDF": OKABE_ITO["orange"],
     "BERT": OKABE_ITO["green"],
 }
+
 PAIR_COLORS = {
     "BERT vs Word2Vec": OKABE_ITO["green"],
     "BERT vs TF-IDF": OKABE_ITO["orange"],
     "Word2Vec vs TF-IDF": OKABE_ITO["blue"],
 }
+
 SELECTED_TRAJECTORY_TERMS = {
     "bloqueio": "Strong contextual support for a Word2Vec-led term",
     "salário": "Strong contextual support for a TF-IDF-led term",
     "reforma": "Theory seed with elevated contextual rank",
     "trabalho": "Stable-control leakage diagnostic",
 }
+
 EXPORT_SUFFIXES = {
     "pdf": {"dpi": None},
     "eps": {"dpi": None},
@@ -72,6 +78,7 @@ def generate_paper_figures(experiment_root: Path, output_dir: Path) -> dict[str,
     _ = PaperFigurePaths(experiment_root=experiment_root, output_dir=output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     _apply_publication_style()
+
     slice_summary = pd.read_parquet(experiment_root / "prepared" / "slice_summary.parquet")
     lemma_slice_stats = pd.read_parquet(experiment_root / "prepared" / "lemma_slice_stats.parquet")
     comparison_panel = pd.read_parquet(
@@ -93,12 +100,15 @@ def generate_paper_figures(experiment_root: Path, output_dir: Path) -> dict[str,
     bert_trajectory = pd.read_parquet(
         experiment_root / "scores" / "bert_confirmatory" / "trajectory.parquet"
     )
+
     preferred_layer = int(cross_summary["preferred_layer"])
+
     figure_manifest: dict[str, object] = {
         "experiment_root": str(experiment_root),
         "preferred_layer": preferred_layer,
         "figures": [],
     }
+
     corpus_path = output_dir / "figure_01_corpus_profile"
     _plot_corpus_profile(slice_summary, lemma_slice_stats, corpus_path)
     figure_manifest["figures"].append(
@@ -106,12 +116,13 @@ def generate_paper_figures(experiment_root: Path, output_dir: Path) -> dict[str,
             "id": "figure_01",
             "stem": str(corpus_path),
             "caption": (
-                "Corpus profile for the BrPoliCorpus floor baseline. Panel (A) shows the "
+                "Corpus profile for the frozen BrPoliCorpus floor baseline. Panel (A) shows the "
                 "number of floor speeches per yearly slice, panel (B) the retained token volume, "
                 "and panel (C) the number of unique lemmas observed after preprocessing."
             ),
         }
     )
+
     agreement_path = output_dir / "figure_02_method_agreement"
     agreement_metrics = _plot_method_agreement(
         comparison_panel=comparison_panel,
@@ -132,6 +143,7 @@ def generate_paper_figures(experiment_root: Path, output_dir: Path) -> dict[str,
             "stats": agreement_metrics,
         }
     )
+
     overlap_path = output_dir / "figure_03_overlap_and_rank_statistics"
     overlap_metrics = _plot_overlap_and_rank_statistics(
         comparison_panel=comparison_panel,
@@ -156,6 +168,7 @@ def generate_paper_figures(experiment_root: Path, output_dir: Path) -> dict[str,
             "stats": overlap_metrics,
         }
     )
+
     trajectory_path = output_dir / "figure_04_representative_trajectories"
     _plot_representative_trajectories(
         word2vec_trajectory=word2vec_trajectory,
@@ -177,6 +190,7 @@ def generate_paper_figures(experiment_root: Path, output_dir: Path) -> dict[str,
             ),
         }
     )
+
     study_design_path = output_dir / "figure_05_study_design"
     _plot_study_design(output_stem=study_design_path)
     figure_manifest["figures"].append(
@@ -184,18 +198,20 @@ def generate_paper_figures(experiment_root: Path, output_dir: Path) -> dict[str,
             "id": "figure_05",
             "stem": str(study_design_path),
             "caption": (
-                "Staged comparative workflow. Lower-cost baselines nominate "
+                "Paper-facing comparative workflow. Cheap baselines nominate "
                 "candidates; the shared panel combines those candidates with "
                 "controls and theory seeds before contextual inspection and "
                 "agreement analysis."
             ),
         }
     )
+
     manifest_path = output_dir / "figure_manifest.json"
     manifest_path.write_text(
         json.dumps(figure_manifest, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
+    _write_inventory_markdown(output_dir / "figure_inventory.md", figure_manifest)
     return figure_manifest
 
 
@@ -237,6 +253,7 @@ def _save_individual_panels(
     axes: list[plt.Axes],
     output_stem: Path,
 ) -> None:
+    """Crop and save each axis as a standalone figure file for use with \\subfigure."""
     fig.canvas.draw()
     renderer = fig.canvas.get_renderer()
     output_stem.parent.mkdir(parents=True, exist_ok=True)
@@ -272,6 +289,11 @@ def _rank_to_percentile(rank: pd.Series) -> pd.Series:
         return pd.Series(np.ones(len(rank)), index=rank.index, dtype=float)
     maximum = float(rank.max())
     return 1.0 - ((rank.astype(float) - 1.0) / (maximum - 1.0))
+
+
+def _rank_within_panel(rank: pd.Series) -> pd.Series:
+    """Rerank globally ordered items within the fixed comparison panel."""
+    return rank.rank(method="first", ascending=True)
 
 
 def _format_p_value(value: float) -> str:
@@ -322,6 +344,7 @@ def _plot_corpus_profile(
     )
     vocab["slice_id"] = vocab["slice_id"].astype(str)
     summary = summary.merge(vocab, on="slice_id", how="left")
+
     fig, axes = plt.subplots(
         3,
         1,
@@ -330,11 +353,13 @@ def _plot_corpus_profile(
         gridspec_kw={"hspace": 0.16},
     )
     years = summary["year"].to_numpy()
+
     series_specs = [
         ("document_count", "Speeches", OKABE_ITO["blue"], "o"),
         ("token_count", "Tokens (M)", OKABE_ITO["orange"], "D"),
         ("vocab_size", "Unique lemmas", OKABE_ITO["green"], "s"),
     ]
+
     for axis, (column, ylabel, color, marker) in zip(axes, series_specs, strict=False):
         values = summary[column].to_numpy(dtype=float)
         if column == "token_count":
@@ -353,6 +378,7 @@ def _plot_corpus_profile(
         axis.set_ylabel(ylabel)
         axis.grid(axis="y", alpha=0.18, linewidth=0.7)
         axis.set_xlim(years.min() - 0.5, years.max() + 0.5)
+
     axes[2].set_xlabel("Year")
     axes[2].set_xticks(years[::3])
     _add_panel_labels(list(axes), x=-0.11, y=1.02)
@@ -470,6 +496,7 @@ def _plot_study_design(output_stem: Path) -> None:
         edgecolor=OKABE_ITO["grey"],
         fontsize=8.2,
     )
+
     add_arrow((0.20, 0.56), (0.26, 0.68), color=OKABE_ITO["grey"])
     add_arrow((0.20, 0.44), (0.26, 0.31), color=OKABE_ITO["grey"])
     add_arrow((0.44, 0.68), (0.50, 0.58), color=OKABE_ITO["orange"])
@@ -477,6 +504,7 @@ def _plot_study_design(output_stem: Path) -> None:
     add_arrow((0.70, 0.58), (0.76, 0.68), color="#B79000")
     add_arrow((0.70, 0.42), (0.76, 0.30), color="#B79000")
     add_arrow((0.86, 0.56), (0.86, 0.42), color=OKABE_ITO["green"])
+
     _save_bundle(fig, output_stem)
 
 
@@ -545,12 +573,16 @@ def _plot_method_agreement(
     output_stem: Path,
 ) -> dict[str, dict[str, float]]:
     panel = comparison_panel.copy()
-    panel["word2vec_pct"] = _rank_to_percentile(panel["word2vec_rank"])
-    panel["tfidf_pct"] = _rank_to_percentile(panel["tfidf_rank"])
+    panel["word2vec_panel_rank"] = _rank_within_panel(panel["word2vec_rank"])
+    panel["tfidf_panel_rank"] = _rank_within_panel(panel["tfidf_rank"])
+    panel["word2vec_pct"] = _rank_to_percentile(panel["word2vec_panel_rank"])
+    panel["tfidf_pct"] = _rank_to_percentile(panel["tfidf_panel_rank"])
+
     bert = bert_comparison.loc[bert_comparison["layer"] == preferred_layer].copy()
     bert["bert_rank"] = bert["primary_drift"].rank(method="first", ascending=False)
     bert["bert_pct"] = _rank_to_percentile(bert["bert_rank"])
     bert = bert.merge(panel[["lemma", "word2vec_pct", "tfidf_pct"]], on="lemma", how="left")
+
     layer_pivot = bert_comparison.pivot_table(
         index="lemma", columns="layer", values="primary_drift", aggfunc="first"
     ).reset_index()
@@ -559,6 +591,7 @@ def _plot_method_agreement(
     layer_pivot["bert_minus4_pct"] = _rank_to_percentile(layer_pivot["bert_minus4_rank"])
     layer_pivot["bert_minus1_pct"] = _rank_to_percentile(layer_pivot["bert_minus1_rank"])
     layer_pivot = layer_pivot.merge(bert[["lemma", "bucket"]], on="lemma", how="left")
+
     highlight_terms = {"bloqueio", "salário", "reforma", "trabalho"}
     panel_configs = [
         (
@@ -566,35 +599,37 @@ def _plot_method_agreement(
             bert,
             "word2vec_pct",
             "bert_pct",
-            "Word2Vec rank percentile",
-            "BERT rank percentile",
+            "Word2Vec within-panel rank percentile",
+            "BERT within-panel rank percentile",
         ),
         (
             "BERT vs TF-IDF",
             bert,
             "tfidf_pct",
             "bert_pct",
-            "TF-IDF rank percentile",
-            "BERT rank percentile",
+            "TF-IDF within-panel rank percentile",
+            "BERT within-panel rank percentile",
         ),
         (
             "Word2Vec vs TF-IDF",
             bert,
             "word2vec_pct",
             "tfidf_pct",
-            "Word2Vec rank percentile",
-            "TF-IDF rank percentile",
+            "Word2Vec within-panel rank percentile",
+            "TF-IDF within-panel rank percentile",
         ),
         (
             "BERT layer agreement",
             layer_pivot,
             "bert_minus4_pct",
             "bert_minus1_pct",
-            "BERT layer \u22124 rank percentile",
-            "BERT layer \u22121 rank percentile",
+            "BERT layer \u22124 within-panel rank percentile",
+            "BERT layer \u22121 within-panel rank percentile",
         ),
     ]
+
     metrics: dict[str, dict[str, float]] = {}
+
     for idx, (name, frame, x_col, y_col, xlabel, ylabel) in enumerate(panel_configs):
         pfig, pax = plt.subplots(1, 1, figsize=(3.3, 3.0))
         metrics[name] = _draw_agreement_scatter(
@@ -602,12 +637,14 @@ def _plot_method_agreement(
         )
         letter = ascii_uppercase[idx].lower()
         _save_bundle(pfig, output_stem.parent / f"{output_stem.name}_panel_{letter}")
+
     fig, axes = plt.subplots(2, 2, figsize=(6.6, 5.9))
     flat_axes = [axes[0, 0], axes[0, 1], axes[1, 0], axes[1, 1]]
     for ax, (_name, frame, x_col, y_col, xlabel, ylabel) in zip(
-        flat_axes, panel_configs, strict=False
+        flat_axes, panel_configs, strict=True
     ):
         _draw_agreement_scatter(ax, frame, x_col, y_col, xlabel, ylabel, highlight_terms)
+
     handles, labels = flat_axes[0].get_legend_handles_labels()
     unique = dict(zip(labels, handles, strict=False))
     fig.legend(
@@ -678,14 +715,19 @@ def _plot_overlap_and_rank_statistics(
         ("BERT vs TF-IDF", "bert_tfidf_topk_overlap"),
         ("Word2Vec vs TF-IDF", "word2vec_tfidf_topk_overlap"),
     ]
+
     preferred = bert_comparison.loc[bert_comparison["layer"] == preferred_layer].copy()
     panel = comparison_panel.copy()
+    panel["word2vec_panel_rank"] = _rank_within_panel(panel["word2vec_rank"])
+    panel["tfidf_panel_rank"] = _rank_within_panel(panel["tfidf_rank"])
     preferred["bert_rank"] = preferred["primary_drift"].rank(method="first", ascending=False)
     method_frames = {
-        "Word2Vec": panel[["lemma", "bucket", "word2vec_rank"]].rename(
-            columns={"word2vec_rank": "rank"}
+        "Word2Vec": panel[["lemma", "bucket", "word2vec_panel_rank"]].rename(
+            columns={"word2vec_panel_rank": "rank"}
         ),
-        "TF-IDF": panel[["lemma", "bucket", "tfidf_rank"]].rename(columns={"tfidf_rank": "rank"}),
+        "TF-IDF": panel[["lemma", "bucket", "tfidf_panel_rank"]].rename(
+            columns={"tfidf_panel_rank": "rank"}
+        ),
         "BERT": preferred[["lemma", "bucket", "bert_rank"]].rename(columns={"bert_rank": "rank"}),
     }
     bucket_order = ["Selected drift", "Theory seed", "Stable control"]
@@ -694,13 +736,16 @@ def _plot_overlap_and_rank_statistics(
         "Theory seed": OKABE_ITO["purple"],
         "Stable control": OKABE_ITO["black"],
     }
+
     stats_summary: dict[str, object] = {
         "overlap": overlap.to_dict(orient="records"),
         "bucket_tests": {},
     }
+
     pfig_a, pax_a = plt.subplots(1, 1, figsize=(3.3, 2.9))
     _draw_topk_overlap_panel(pax_a, overlap, pair_columns, panel_label="A")
     _save_bundle(pfig_a, output_stem.parent / f"{output_stem.name}_panel_a")
+
     for idx, (method_label, frame) in enumerate(method_frames.items(), start=1):
         pfig, pax = plt.subplots(1, 1, figsize=(3.3, 2.9))
         stats_summary["bucket_tests"][method_label] = _plot_bucket_rank_panel(
@@ -713,6 +758,7 @@ def _plot_overlap_and_rank_statistics(
         )
         letter = ascii_uppercase[idx].lower()
         _save_bundle(pfig, output_stem.parent / f"{output_stem.name}_panel_{letter}")
+
     fig, axes = plt.subplots(2, 2, figsize=(6.6, 5.7))
     _draw_topk_overlap_panel(axes[0, 0], overlap, pair_columns, panel_label="A")
     for idx, (axis, (method_label, frame)) in enumerate(
@@ -727,6 +773,7 @@ def _plot_overlap_and_rank_statistics(
             bucket_palette=bucket_palette,
             panel_label=ascii_uppercase[idx],
         )
+
     _save_bundle(fig, output_stem)
     return stats_summary
 
@@ -742,6 +789,7 @@ def _plot_bucket_rank_panel(
     plot_frame = frame.copy()
     plot_frame["bucket_group"] = plot_frame["bucket"].map(_bucket_group)
     plot_frame["rank_pct"] = _rank_to_percentile(plot_frame["rank"])
+
     values_by_bucket = [
         plot_frame.loc[plot_frame["bucket_group"] == bucket_group, "rank_pct"].to_numpy()
         for bucket_group in bucket_order
@@ -769,6 +817,7 @@ def _plot_bucket_rank_panel(
         box = boxplot["boxes"][index]
         box.set_facecolor(to_rgba(bucket_palette[bucket_group], 0.18))
         box.set_edgecolor(bucket_palette[bucket_group])
+
     axis.set_xticks(range(len(bucket_order)))
     axis.set_xticklabels(
         [
@@ -779,11 +828,12 @@ def _plot_bucket_rank_panel(
         ha="right",
     )
     axis.set_ylim(-0.02, 1.05)
-    axis.set_ylabel("Rank percentile")
+    axis.set_ylabel("Within-panel rank percentile")
     axis.grid(axis="y", alpha=0.2)
-    axis.set_title(f"{method_label} rank percentiles")
+    axis.set_title(f"{method_label} within-panel ranks")
     if panel_label is not None:
         _add_axis_panel_label(axis, panel_label)
+
     drift_values = plot_frame.loc[
         plot_frame["bucket_group"] == "Selected drift",
         "rank_pct",
@@ -929,16 +979,19 @@ def _plot_representative_trajectories(
         )
         letter = ascii_uppercase[idx].lower()
         _save_bundle(pfig, output_stem.parent / f"{output_stem.name}_panel_{letter}")
+
     fig, axes = plt.subplots(2, 2, figsize=(6.6, 5.7), sharex=True, sharey=True)
     flat_axes = [axes[0, 0], axes[0, 1], axes[1, 0], axes[1, 1]]
     for ax, (term, t_frame, b_frame, years, w_mean, w_std) in zip(
-        flat_axes, term_data, strict=False
+        flat_axes, term_data, strict=True
     ):
         _draw_trajectory_panel(ax, term, t_frame, b_frame, years, w_mean, w_std)
+
     for axis in flat_axes[:2]:
         axis.set_xlabel("")
     for axis in [axes[0, 1], axes[1, 1]]:
         axis.set_ylabel("")
+
     handles, labels = flat_axes[0].get_legend_handles_labels()
     fig.legend(
         handles, labels, loc="upper center", ncol=3, frameon=False, bbox_to_anchor=(0.5, 1.02)
@@ -971,3 +1024,25 @@ def _zscore(values: np.ndarray) -> np.ndarray:
     if std == 0.0:
         return np.zeros_like(values)
     return (values - float(values.mean())) / std
+
+
+def _write_inventory_markdown(path: Path, manifest: dict[str, object]) -> None:
+    lines = [
+        "# Paper Figure Inventory",
+        "",
+        f"Experiment root: `{manifest['experiment_root']}`",
+        f"Preferred BERT layer: `{manifest['preferred_layer']}`",
+        "",
+    ]
+    for figure in manifest["figures"]:
+        lines.extend(
+            [
+                f"## {figure['id']}",
+                "",
+                f"Stem: `{figure['stem']}`",
+                "",
+                figure["caption"],
+                "",
+            ]
+        )
+    path.write_text("\n".join(lines), encoding="utf-8")
