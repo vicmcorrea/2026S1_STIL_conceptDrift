@@ -83,3 +83,15 @@ results/frozen_run/        compact paper-figure inputs
 The code and configuration are released under the MIT License. BrPoliCorpus
 remains subject to its CC BY-NC 4.0 source license. Citation metadata is
 provided in `CITATION.cff`.
+
+Please cite the accompanying paper as follows.
+
+```bibtex
+@inproceedings{correa2026comparative,
+  author    = {Correa, Jo\~{a}o Victor M. and Vale, Oto Ara\'{u}jo and Silva, Renato Moraes},
+  title     = {A Comparative Framework for Diachronic Lexical Semantic Change in Brazilian Portuguese Political Discourse},
+  booktitle = {Proceedings of the 17th Brazilian Symposium in Information and Human Language Technology},
+  year      = {2026},
+  url       = {https://github.com/nilc-nlp/brpolicorpus-semantic-drift}
+}
+```
