@@ -9,8 +9,8 @@ authors:
     given-names: Oto Araújo
   - family-names: Silva
     given-names: Renato Moraes
-repository-code: "https://github.com/nilc-nlp/2026S1_STIL_conceptDrift"
-url: "https://github.com/nilc-nlp/2026S1_STIL_conceptDrift"
+repository-code: "https://github.com/nilc-nlp/brpolicorpus-semantic-drift"
+url: "https://github.com/nilc-nlp/brpolicorpus-semantic-drift"
 license: MIT
 date-released: "2026-07-22"
 abstract: >
